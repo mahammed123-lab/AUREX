@@ -1,0 +1,7 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.7
+# browser-use pinned to a recent stable; requires Python >=3.11
+browser-use>=0.1.40
+# browser-use pulls in playwright itself, but the browser binary must be
+# installed once via:  playwright install chromium

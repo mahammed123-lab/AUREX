@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">AUREX</string>
+    <string name="accessibility_service_description">Lets AUREX control your device end-to-end: auto-click the send button in WhatsApp/Telegram, press back/home, open quick settings, and complete actions for you. AUREX performs these actions only when you ask it to.</string>
+</resources>

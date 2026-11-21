@@ -1,0 +1,31 @@
+# Build artifacts
+build/
+app/build/
+**/build/
+.gradle/
+.kotlin/
+local.properties
+*.apk
+*.aab
+
+# IDE
+.idea/
+*.iml
+
+# Secrets
+.env
+*.keystore
+debug.keystore
+google-services.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local dumps from UI automation experiments
+ui*.xml
+turn_*.wav
+
+# SQLite runtime artifacts
+*.db-shm
+*.db-wal

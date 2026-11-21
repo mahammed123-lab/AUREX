@@ -1,0 +1,34 @@
+﻿================================================
+ AUREX - BUILD INSTRUCTIONS
+================================================
+
+1) Install Android Studio (latest version) - includes the SDK
+   https://developer.android.com/studio
+
+2) Open Android Studio > Open > select this folder (AUREX)
+
+3) Let Gradle sync finish (first sync downloads ~500MB of
+   dependencies + Gradle 9.1.0 - needs internet, be patient)
+
+4) Create a file named '.env' in this folder with your keys:
+
+   GEMINI_API_KEY=your_key_here
+   NVIDIA_API_KEY=your_key_here
+
+   (Get keys: aistudio.google.com/apikey and build.nvidia.com)
+   You can also skip this and enter keys inside the app:
+   Sidebar > API Configuration
+
+5) Connect your phone (USB debugging ON) > press Run
+
+VOICE (Piper, fully offline):
+- Voice model en_US-joe-medium (60MB) is bundled in
+  app/src/main/assets/jarvis-voice/
+- Real sherpa-onnx v1.13.6 native libs included for
+  arm64-v8a + armeabi-v7a
+- First launch unpacks the model (few extra seconds),
+  then speech is instant. Logcat tag 'TtsManager' shows:
+  'Piper voice ready'
+
+APK OUTPUT: app/build/outputs/apk/debug/app-debug.apk
+================================================

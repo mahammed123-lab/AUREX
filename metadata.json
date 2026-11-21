@@ -1,0 +1,6 @@
+{
+  "name": "AUREX",
+  "description": "An advanced mobile assistant featuring an interactive voice orb, glassmorphism UI, theme support, and intelligent AI chat.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,8 @@
+{
+  "device_serial": "your_device_serial_here",
+  "screen_width": 1200,
+  "screen_height": 2670,
+  "screenshot_dir": "./screenshots",
+  "default_ime": "com.android.inputmethod.latin/.LatinIME",
+  "adb_keyboard_ime": "com.android.adbkeyboard/.AdbIME"
+}

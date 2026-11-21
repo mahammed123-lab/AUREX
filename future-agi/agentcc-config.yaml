@@ -1,0 +1,165 @@
+# Future AGI Agent-Command-Center gateway configuration for JARVIS.
+#
+# This is the JARVIS-specific config (Phase 1 of the Future AGI integration).
+# Drop it at agentcc-gateway/config.yaml on the backend host after self-hosting
+# Future AGI. It routes every LLM call JARVIS makes through one OpenAI-compatible
+# endpoint (localhost:8080/v1) with failover, semantic caching, and guardrails.
+#
+# NOTE: requires the self-hosted Future AGI stack (Docker). The Android app never
+# holds these keys — it talks only to the JARVIS backend over its own auth API.
+
+server:
+  port: 8080
+  host: "127.0.0.1"          # localhost only — do NOT expose the gateway publicly
+  read_timeout: 5s
+  write_timeout: 300s
+  idle_timeout: 120s
+  shutdown_timeout: 30s
+  default_request_timeout: 120s
+
+providers:
+  # ── Local brain (Qwen2.5 + LoRA) over JARVIS's OpenAI-compatible bridge ──
+  local-qwen:
+    base_url: "http://localhost:8000"  # JARVIS FastAPI bridge /v1
+    api_key: "local"                   # placeholder the bridge expects
+    api_format: "openai"
+    local: true
+    type: "vllm"
+    default_timeout: 120s
+    max_concurrent: 10
+    conn_pool_size: 10
+    models:
+      - qwen2.5-7b-instruct
+      - qwen2.5-14b-instruct
+
+  # ── Cloud fallbacks (add real keys in the environment, never in this file) ──
+  nvidia-nim:
+    base_url: "https://integrate.api.nvidia.com/v1"
+    api_key: "${NVIDIA_API_KEY}"
+    api_format: "openai"
+    default_timeout: 120s
+    max_concurrent: 50
+    conn_pool_size: 50
+    models:
+      - meta/llama-3.1-8b-instruct
+      - meta/llama-3.1-70b-instruct
+      - meta/llama-3.2-90b-vision-instruct
+      - deepseek-ai/deepseek-r1
+
+  openrouter:
+    api_key: "${OPENROUTER_API_KEY}"
+    type: "openrouter"
+    default_timeout: 120s
+    models:
+      - openai/gpt-4o-mini
+      - anthropic/claude-3.5-sonnet
+
+  groq:
+    api_key: "${GROQ_API_KEY}"
+    type: "groq"
+    default_timeout: 60s
+    models:
+      - llama-3.3-70b-versatile
+
+# Explicit model -> provider mapping (default: first provider that serves it).
+model_map:
+  qwen2.5-7b-instruct: local-qwen
+  qwen2.5-14b-instruct: local-qwen
+
+# Failover order: local Qwen -> NVIDIA NIM -> OpenRouter -> Groq.
+routing:
+  default_strategy: "least-latency"
+  failover:
+    enabled: true
+    max_attempts: 4
+    on_status_codes: [429, 500, 502, 503, 504]
+    on_timeout: true
+  retry:
+    enabled: true
+    max_retries: 2
+    initial_delay: 500ms
+    max_delay: 10s
+    multiplier: 2.0
+  model_fallbacks:
+    qwen2.5-14b-instruct:
+      - meta/llama-3.1-70b-instruct
+      - openai/gpt-4o-mini
+    qwen2.5-7b-instruct:
+      - meta/llama-3.1-8b-instruct
+
+# Semantic caching for repeated assistant queries (per-request TTL overridable).
+cache:
+  enabled: true
+  default_ttl: 5m
+  max_entries: 10000
+
+# Virtual-key auth: only the JARVIS backend holds the gateway key (server-side).
+# Uncomment once you generate a virtual key (format "acc_...") in the dashboard.
+# auth:
+#   enabled: true
+#   keys:
+#     - name: "jarvis-backend"
+#       key: "acc_<virtual-key-from-dashboard>"
+#       owner: "jarvis"
+#       models: []
+
+# Guardrails — priority is prompt-injection + jailbreak because JARVIS's web
+# agent and desktop-control consume untrusted page content. Block on the
+# aggressive paths; warn elsewhere.
+guardrails:
+  enabled: true
+  fail_open: true           # a downed guardrail must never take JARVIS down
+  default_timeout: 5s
+  rules:
+    - name: "prompt-injection"
+      stage: "pre"
+      mode: "sync"
+      action: "block"
+      threshold: 0.75
+      timeout: 3s
+    - name: "jailbreak"
+      stage: "pre"
+      mode: "sync"
+      action: "block"
+      threshold: 0.75
+      timeout: 3s
+    - name: "hallucination"
+      stage: "post"
+      mode: "sync"
+      action: "warn"
+      threshold: 0.7
+    - name: "pii-detection"
+      stage: "pre"
+      mode: "sync"
+      action: "warn"
+      threshold: 0.8
+      config:
+        entities: ["email", "phone", "ssn", "credit_card"]
+
+# OpenTelemetry — CONSUMES the W3C traceparent the Android app already sends
+# (TraceparentInterceptor.kt) so every mobile action is the trace root.
+otel:
+  enabled: true
+  service_name: "agentcc-gateway"
+  exporter: "otlp"
+  endpoint: "http://fi-collector:4318"
+  protocol: "http/protobuf"
+  trace_propagation: true    # nest spans under the app's inbound traceparent
+  metadata_attributes: true
+  attributes:
+    environment: "production"
+    project_name: "jarvis"
+    project_type: "observe"
+
+# Keep the assistant working if the observability stack is down.
+# (fail-open philosophy — observability must never break the product.)
+
+logging:
+  level: info
+
+cost_tracking:
+  enabled: true
+
+rate_limiting:
+  enabled: true
+  global_rpm: 0
