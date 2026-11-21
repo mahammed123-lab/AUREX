@@ -102,5 +102,12 @@ API keys and credentials are never committed. `.env`, `*.keystore`, and
 
 ## License
 
-Source code in this repository is provided as-is. Vendored third-party components retain
-their original licenses as noted above.
+AUREX AI is licensed under the **GNU General Public License v3.0** — see [`LICENSE`](LICENSE).
+
+This is strong copyleft: anyone who modifies AUREX and distributes it must publish their
+modified source under the same license. AUREX cannot be incorporated into proprietary
+closed-source applications.
+
+Vendored third-party components under `device_automation/` retain their own licenses
+(MIT for `adb-kit`, Apache 2.0 for `mobile-use`) and are not relicensed by this project's
+GPL-3.0 terms.
